@@ -136,52 +136,37 @@
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
         // --- ICONS ---
-        const IconUpload = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejo[...]
-        const IconPlay = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" stroke[...]
-        const IconPause = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strok[...]
-        const IconDownload = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLine[...]
-        const IconLoader = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejo[...]
-        const IconSparkles = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275[...]
-        const IconCrop = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin[...]
-        const IconGhost = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M9 22H15C20 22 22 19 22 15V7C22 4 20 2 15 2H9C4 2[...]
+        const IconUpload = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+        const IconPlay = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+        const IconPause = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>;
+        const IconDownload = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const IconLoader = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>;
+        const IconSparkles = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></svg>;
+        const IconCrop = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>;
+        const IconGhost = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M9 22H15C20 22 22 19 22 15V7C22 4 20 2 15 2H9C4 2 2 4 2 7V15C2 19 4 22 9 22Z" opacity="0.4"/><path d="M15.75 12C15.75 12.41 15.41 12.75 15 12.75H9C8.59 12.75 8.25 12.41 8.25 12C8.25 11.59 8.59 11.25 9 11.25H15C15.41 11.25 15.75 11.59 15.75 12Z"/><circle cx="10" cy="9" r="1"/><circle cx="14" cy="9" r="1"/></svg>;
         
         // Social Icons Component
         const SocialIcon = ({ type }) => {
-            const classes = "w-10 h-10 squircle bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:scale-110 hover:shadow-md transition-all duration-300 ease-spring curso[...]
+            const classes = "w-10 h-10 squircle bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:scale-110 hover:shadow-md transition-all duration-300 ease-spring cursor-pointer";
             
             if (type === 'github') return (
                 <a href="https://github.com/arnavsocial" target="_blank" className={classes}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#181717"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.[...]
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#181717"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.763-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                 </a>
             );
             
             // Fixed Instagram Button
             if (type === 'instagram') return (
                 <a href="https://www.instagram.com/arnavsocial/" target="_blank" className={classes}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="igGrad" x1="0" x2="1" y1="0" y2="1">
-                                <stop offset="0%" stopColor="#ff7a7a" />
-                                <stop offset="50%" stopColor="#ff9a7a" />
-                                <stop offset="100%" stopColor="#d62a9d" />
-                            </linearGradient>
-                        </defs>
-
-                        <!-- Rounded square outline -->
-                        <rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#igGrad)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-
-                        <!-- Inner circle -->
-                        <circle cx="12" cy="12" r="4.2" stroke="url(#igGrad)" strokeWidth="1.8" fill="none" />
-
-                        <!-- Small top-right dot -->
-                        <circle cx="17.6" cy="6.4" r="0.9" fill="url(#igGrad)" />
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style={{color: '#E1306C'}}>
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                     </svg>
                 </a>
             );
             
             if (type === 'gmail') return (
                 <a href="potato" target="_blank" className={classes}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0[...]
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
                 </a>
             );
             return null;
@@ -319,7 +304,7 @@
                 if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                     const lm = results.multiFaceLandmarks[0];
                     let leftEye, rightEye;
-                    if (lm.length > 468) { leftEye = lm[468]; rightEye = lm[473]; } else { leftEye = { x: (lm[33].x + lm[133].x)/2, y: (lm[33].y + lm[133].y)/2 }; rightEye = { x: (lm[362].x + lm[263].[...]
+                    if (lm.length > 468) { leftEye = lm[468]; rightEye = lm[473]; } else { leftEye = { x: (lm[33].x + lm[133].x)/2, y: (lm[33].y + lm[133].y)/2 }; rightEye = { x: (lm[362].x + lm[263].x)/2, y: (lm[362].y + lm[263].y)/2 }; }
                     setImages(prev => prev.map(img => img.id === currentId ? { ...img, status: 'ready', landmarks: { leftEye, rightEye } } : img));
                     processingQueueRef.current = null; 
                 } else {
@@ -370,12 +355,12 @@
                         const gif = new GIF({ workers: 2, quality: 10, workerScript: gifWorkerUrl, width: dims.w, height: dims.h });
                         validImages.forEach(img => { drawFrame(ctx, img, dims.w, dims.h); gif.addFrame(ctx, { copy: true, delay: speed * 1000 }); });
                         gif.on('progress', p => setExportProgress(Math.round(p * 100)));
-                        gif.on('finished', blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'match-cut.gif'; a.click(); setStatus('idl[...]
+                        gif.on('finished', blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'match-cut.gif'; a.click(); setStatus('idle'); setIsPlaying(true); });
                         gif.render();
                     } else {
                         const stream = canvas.captureStream(30); const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); const chunks = [];
                         recorder.ondataavailable = e => chunks.push(e.data);
-                        recorder.onstop = () => { const blob = new Blob(chunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.d[...]
+                        recorder.onstop = () => { const blob = new Blob(chunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'match-cut.webm'; a.click(); setStatus('idle'); setIsPlaying(true); };
                         recorder.start();
                         for (let i = 0; i < validImages.length; i++) { drawFrame(ctx, validImages[i], dims.w, dims.h); await new Promise(r => setTimeout(r, speed * 1000)); }
                         recorder.stop();
@@ -399,7 +384,7 @@
                                 <SocialIcon type="instagram" />
                                 <SocialIcon type="gmail" />
                             </div>
-                            <div className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 ${modelReady ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-50[...]
+                            <div className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 ${modelReady ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
                                 <div className={`w-1.5 h-1.5 rounded-full ${modelReady ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                                 {modelReady ? 'READY' : 'LOADING'}
                             </div>
@@ -419,7 +404,7 @@
                                 <canvas ref={canvasRef} className="w-full h-full object-contain" />
                                 
                                 {/* Overlay Controls */}
-                                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2.5 bg-zinc-900/40 backdrop-blur-xl rounded-full text-white/90 shadow-2xl bo[...]
+                                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2.5 bg-zinc-900/40 backdrop-blur-xl rounded-full text-white/90 shadow-2xl border border-white/5 transition-transform hover:scale-105 duration-200">
                                     <button onClick={() => setIsPlaying(!isPlaying)} className="hover:text-white transition-colors">
                                         {isPlaying ? <IconPause /> : <IconPlay />}
                                     </button>
@@ -438,7 +423,7 @@
                                 <div 
                                     onClick={() => fileInputRef.current.click()}
                                     onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={e => e.preventDefault()} onDrop={onDrop}
-                                    className={`group h-32 squircle bg-gray-100 border border-transparent flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-w[...]
+                                    className={`group h-32 squircle bg-gray-100 border border-transparent flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-white hover:shadow-md hover:scale-[1.01] duration-300
                                         ${isDragging ? 'bg-blue-50 border-blue-400' : ''}`}
                                 >
                                     <input type="file" multiple accept="image/*" ref={fileInputRef} className="hidden" onChange={e => handleFiles(e.target.files)} />
@@ -458,7 +443,7 @@
                                         <div className="flex bg-white shadow-sm border border-gray-100 p-1 rounded-xl">
                                             {Object.keys(RATIOS).map(r => (
                                                 <button key={r} onClick={() => setRatio(r)} 
-                                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-300 ease-out ${ratio === r ? 'bg-black text-white shadow-md transform[...]
+                                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-300 ease-out ${ratio === r ? 'bg-black text-white shadow-md transform scale-105' : 'text-gray-500 hover:text-gray-900'}`}>
                                                     {r}
                                                 </button>
                                             ))}
@@ -496,7 +481,7 @@
                                         <div className="flex justify-end">
                                             <div className="flex bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
                                                 {['GIF', 'MP4'].map(f => (
-                                                    <button key={f} onClick={() => setFormat(f)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${format === f ? 'bg-g[...]
+                                                    <button key={f} onClick={() => setFormat(f)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${format === f ? 'bg-gray-100 text-black shadow-inner transform scale-105' : 'text-gray-400 hover:text-gray-600'}`}>{f}</button>
                                                 ))}
                                             </div>
                                         </div>
@@ -509,7 +494,7 @@
                                     <div className="grid grid-cols-2 gap-4">
                                         <button 
                                             onClick={() => setCropMode('smart')}
-                                            className={`h-14 squircle text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 shadow-md text-white overflow-hidden rela[...]
+                                            className={`h-14 squircle text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 shadow-md text-white overflow-hidden relative
                                             ${cropMode === 'smart' ? 'texture-bg ring-2 ring-offset-2 ring-blue-500 transform scale-[1.02]' : 'bg-gray-800'}`}
                                         >
                                             <span className="relative z-10 flex items-center gap-2"><IconSparkles /> Smart Crop</span>
@@ -517,7 +502,7 @@
                                         <button 
                                             onClick={() => setCropMode('crop')}
                                             className={`h-14 squircle text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 border shadow-sm
-                                            ${cropMode === 'crop' ? 'bg-white border-blue-500 text-blue-600 ring-1 ring-blue-500 transform scale-[1.02]' : 'bg-white border-gray-200 text-gray-700 hover[...]
+                                            ${cropMode === 'crop' ? 'bg-white border-blue-500 text-blue-600 ring-1 ring-blue-500 transform scale-[1.02]' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                                         >
                                             <IconCrop /> Crop
                                         </button>
@@ -528,7 +513,7 @@
                                 <button 
                                     onClick={handleExport} 
                                     disabled={status !== 'idle' || validImages.length < 2}
-                                    className="w-full h-16 texture-bg text-white squircle font-bold text-lg flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:[...]
+                                    className="w-full h-16 texture-bg text-white squircle font-bold text-lg flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                                 >
                                     {status === 'exporting' ? 
                                         <><IconLoader /> Exporting {exportProgress}%</> : 
