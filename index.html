@@ -86,43 +86,49 @@
             border-radius: 999px;
         }
 
-        /* Smooth Toggle Switch */
-        .toggle-checkbox {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            position: absolute;
-        }
-        
-        .toggle-label {
-            width: 44px;
-            height: 24px;
-            background-color: #e5e5e5;
-            border-radius: 999px;
-            position: relative;
+        /* --- CIRCULAR CHECKBOX --- */
+        .checkbox-circle {
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border: 2px solid #e5e7eb; /* gray-200 */
+            border-radius: 50%;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            position: relative;
+            background-color: white;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        .toggle-label::after {
+        .checkbox-circle:hover {
+            border-color: #94a3b8;
+            transform: scale(1.05);
+        }
+
+        .checkbox-circle:checked {
+            border-color: transparent;
+            /* Using the texture-bg logic directly via class in React, or applying here */
+            background: radial-gradient(circle at 20% 0%, #1e40af 0%, #0f172a 60%, #020617 100%);
+            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+        }
+
+        /* Checkmark Icon handled via SVG in React, but we can fake it with CSS */
+        .checkbox-circle::after {
             content: '';
             position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background-color: white;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 8px;
+            border-left: 2.5px solid white;
+            border-bottom: 2.5px solid white;
+            transform: translate(-50%, -60%) rotate(-45deg) scale(0);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0;
         }
 
-        .toggle-checkbox:checked + .toggle-label {
-            background: #1e3a8a; /* Deep blue match */
-        }
-
-        .toggle-checkbox:checked + .toggle-label::after {
-            transform: translateX(20px);
+        .checkbox-circle:checked::after {
+            transform: translate(-50%, -60%) rotate(-45deg) scale(1);
+            opacity: 1;
         }
         
         /* Scrollbar */
@@ -145,28 +151,48 @@
         const IconCrop = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>;
         const IconGhost = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M9 22H15C20 22 22 19 22 15V7C22 4 20 2 15 2H9C4 2 2 4 2 7V15C2 19 4 22 9 22Z" opacity="0.4"/><path d="M15.75 12C15.75 12.41 15.41 12.75 15 12.75H9C8.59 12.75 8.25 12.41 8.25 12C8.25 11.59 8.59 11.25 9 11.25H15C15.41 11.25 15.75 11.59 15.75 12Z"/><circle cx="10" cy="9" r="1"/><circle cx="14" cy="9" r="1"/></svg>;
         
-        // Social Icons Component
+        // --- SOCIAL ICONS ---
         const SocialIcon = ({ type }) => {
-            const classes = "w-10 h-10 squircle bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:scale-110 hover:shadow-md transition-all duration-300 ease-spring cursor-pointer";
+            const classes = "w-10 h-10 squircle bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:shadow-md hover:-translate-y-1 transition-all duration-300 ease-spring cursor-pointer overflow-hidden group";
             
             if (type === 'github') return (
-                <a href="https://github.com/arnavsocial" target="_blank" className={classes}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#181717"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.763-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                <a href="https://github.com/arnavsocial" target="_blank" className={classes} title="GitHub">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#181717" className="group-hover:opacity-80 transition-opacity"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.419-1.305.763-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                 </a>
             );
             
-            // Fixed Instagram Button
             if (type === 'instagram') return (
-                <a href="https://www.instagram.com/arnavsocial/" target="_blank" className={classes}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style={{color: '#E1306C'}}>
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                <a href="https://www.instagram.com/arnavsocial/" target="_blank" className={classes} title="Instagram">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+                        <defs>
+                            <linearGradient id="instaGrad" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+                                <stop offset="0" stopColor="#FFD600"/>
+                                <stop offset="0.25" stopColor="#FF7A00"/>
+                                <stop offset="0.5" stopColor="#FF0069"/>
+                                <stop offset="0.75" stopColor="#D300C5"/>
+                                <stop offset="1" stopColor="#7638FA"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#instaGrad)" strokeWidth="2"/>
+                        <circle cx="12" cy="12" r="3.5" stroke="url(#instaGrad)" strokeWidth="2"/>
+                        <circle cx="17.5" cy="6.5" r="1.5" fill="url(#instaGrad)"/>
                     </svg>
                 </a>
             );
             
+            // --- UPDATED: High Quality Gmail Vector ---
             if (type === 'gmail') return (
-                <a href="potato" target="_blank" className={classes}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
+                <a href="potato" target="_blank" className={classes} title="Gmail">
+                    <svg viewBox="0 0 24 24" width="22" height="22">
+                        <path d="M19.5 3h-3v8.32L12 14.2 7.5 11.32V3h-3C3.12 3 2 4.12 2 5.5v13C2 19.88 3.12 21 4.5 21h3v-7l4.5 2.5 4.5-2.5v7h3c1.38 0 2.5-1.12 2.5-2.5v-13C22 4.12 20.88 3 19.5 3z" fill="#E1E1E1"/>
+                        <path d="M19.5 3h-3v8.32L12 14.2 7.5 11.32V3h-3C3.12 3 2 4.12 2 5.5v.5c0-1.38 1.12-2.5 2.5-2.5h3v8.32L12 14.7l4.5-2.88V3.5h3c1.38 0 2.5 1.12 2.5 2.5v-.5c0-1.38-1.12-2.5-2.5-2.5z" fill="#E1E1E1" opacity=".2"/>
+                        <path d="M22 18.5v-13c0-1.38-1.12-2.5-2.5-2.5h-3v8.32L12 14.2 7.5 11.32V3h-3C3.12 3 2 4.12 2 5.5v13c0 1.38 1.12 2.5 2.5 2.5h3v-7l4.5 2.5 4.5-2.5v7h3c1.38 0 2.5-1.12 2.5-2.5z" fill="none"/>
+                        <path d="M19.5 3H15v8.32L12 14.2 9 12.28V3H4.5C3.12 3 2 4.12 2 5.5v13C2 19.88 3.12 21 4.5 21H9v-7l3 1.67L15 14v7h4.5c1.38 0 2.5-1.12 2.5-2.5v-13C22 4.12 20.88 3 19.5 3z" fill="#fff" opacity=".3" style={{display:'none'}}/>
+                        <path fill="#4285F4" d="M4.5 3C3.12 3 2 4.12 2 5.5v13c0 1.38 1.12 2.5 2.5 2.5H7v-7l-5-3.5V5.5c0-.46.12-.89.34-1.26L7 7.5V3H4.5z"/>
+                        <path fill="#34A853" d="M17 7.5l4.66-3.26c.22.37.34.8.34 1.26v5.5l-5 3.5v7h2.5c1.38 0 2.5-1.12 2.5-2.5v-13c0-1.38-1.12-2.5-2.5-2.5H17v3z"/>
+                        <path fill="#FBBC04" d="M2 10.5l5 3.5 5-3.15 5 3.15 5-3.5V5.5C22 4.12 20.88 3 19.5 3h-3v4.5L12 10.42 7.5 7.5V3h-3C3.12 3 2 4.12 2 5.5v5z"/>
+                        <path fill="#EA4335" d="M12 10.42L16.5 7.5V3H12v7.42zm0 0L7.5 7.5V3H12v7.42z"/>
+                    </svg>
                 </a>
             );
             return null;
@@ -227,7 +253,7 @@
             }, []);
 
             // 2. Draw
-            const drawFrame = useCallback((ctx, imgData, w, h) => {
+            const drawFrame = useCallback((ctx, imgData, w, h, renderGuides) => {
                 ctx.fillStyle = '#121212';
                 ctx.fillRect(0, 0, w, h);
 
@@ -264,7 +290,8 @@
                     ctx.drawImage(img, 0, 0);
                     ctx.restore();
 
-                    if (showGuides) {
+                    // Check 'renderGuides' arg instead of 'showGuides' state
+                    if (renderGuides) {
                         ctx.save();
                         ctx.strokeStyle = '#22d3ee';
                         ctx.lineWidth = 2 * (1/scaleModifier); 
@@ -283,7 +310,7 @@
                     const y = (h - img.height * scale) / 2;
                     ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
                 }
-            }, [layoutScale, cropMode, showGuides]);
+            }, [layoutScale, cropMode]); 
 
             // 3. Process
             const processImages = async (queue) => {
@@ -338,7 +365,8 @@
                 canvas.width = dims.w; canvas.height = dims.h;
                 if (validImages.length === 0) { ctx.fillStyle = '#171717'; ctx.fillRect(0, 0, dims.w, dims.h); return; }
                 const safeIndex = previewIndex % validImages.length;
-                drawFrame(ctx, validImages[safeIndex], dims.w, dims.h);
+                // Pass 'showGuides' state during preview
+                drawFrame(ctx, validImages[safeIndex], dims.w, dims.h, showGuides);
                 if (isPlaying && validImages.length > 1) {
                     const timeout = setTimeout(() => { setPreviewIndex(prev => (prev + 1) % validImages.length); }, speed * 1000);
                     return () => clearTimeout(timeout);
@@ -351,9 +379,13 @@
                 const dims = RATIOS[ratio];
                 const canvas = document.createElement('canvas'); canvas.width = dims.w; canvas.height = dims.h; const ctx = canvas.getContext('2d');
                 try {
+                    // Pass 'false' for guides during export
                     if (format === 'GIF') {
                         const gif = new GIF({ workers: 2, quality: 10, workerScript: gifWorkerUrl, width: dims.w, height: dims.h });
-                        validImages.forEach(img => { drawFrame(ctx, img, dims.w, dims.h); gif.addFrame(ctx, { copy: true, delay: speed * 1000 }); });
+                        validImages.forEach(img => { 
+                            drawFrame(ctx, img, dims.w, dims.h, false); // No guides
+                            gif.addFrame(ctx, { copy: true, delay: speed * 1000 }); 
+                        });
                         gif.on('progress', p => setExportProgress(Math.round(p * 100)));
                         gif.on('finished', blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'match-cut.gif'; a.click(); setStatus('idle'); setIsPlaying(true); });
                         gif.render();
@@ -362,7 +394,10 @@
                         recorder.ondataavailable = e => chunks.push(e.data);
                         recorder.onstop = () => { const blob = new Blob(chunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'match-cut.webm'; a.click(); setStatus('idle'); setIsPlaying(true); };
                         recorder.start();
-                        for (let i = 0; i < validImages.length; i++) { drawFrame(ctx, validImages[i], dims.w, dims.h); await new Promise(r => setTimeout(r, speed * 1000)); }
+                        for (let i = 0; i < validImages.length; i++) { 
+                            drawFrame(ctx, validImages[i], dims.w, dims.h, false); // No guides
+                            await new Promise(r => setTimeout(r, speed * 1000)); 
+                        }
                         recorder.stop();
                     }
                 } catch (e) { alert("Export failed"); setStatus('idle'); }
@@ -451,9 +486,14 @@
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">GUIDES</span>
-                                        <div className="relative inline-block w-11 align-middle select-none">
-                                            <input type="checkbox" checked={showGuides} onChange={() => setShowGuides(!showGuides)} className="toggle-checkbox"/>
-                                            <label className="toggle-label"></label>
+                                        {/* --- UPDATED: Circular Checkbox --- */}
+                                        <div className="flex items-center justify-center">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={showGuides} 
+                                                onChange={() => setShowGuides(!showGuides)} 
+                                                className="checkbox-circle"
+                                            />
                                         </div>
                                     </div>
                                 </div>
