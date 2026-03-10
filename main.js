@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const aiStatusText = document.getElementById('ai-status-text');
     const aiStatusDot = document.getElementById('ai-status-dot');
     
-    // New Elements for Scale & Ratio
+    // Scale & Ratio Elements
     const ratioBtns = document.querySelectorAll('.ratio-btn');
     const sliderScale = document.getElementById('slider-scale');
     const scaleLabel = document.getElementById('scale-label');
@@ -31,27 +31,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         '4:5': { w: 1080, h: 1350 }
     };
     
-    let originalImages = []; // Cache originals to allow live re-scaling
+    let originalImages = []; 
     let frames = []; 
     let isPlaying = true;
     let currentFrame = 0;
     let playbackSpeed = parseFloat(sliderSpeed.value); 
     let currentRatio = '1:1';
-    let currentScale = 0.35; // Default Face Scale
+    let currentScale = 0.35; 
     let playbackTimer = null;
 
-    // 1. Guides OFF by default
     if (toggleGuides) toggleGuides.checked = false;
 
-    // --- 2. Initialize AI Engine & Python ---
+    // --- 1. Initialize AI Engine & Python ---
     const ai = new AIEngine();
     try {
         await ai.initialize();
         
-        // CRITICAL FIX: Wait for Python and PyScript to fully boot
+        // Anti-Hang Protocol: Wait for Python, but don't wait forever
         await waitForPython();
         
         aiStatusText.textContent = "AI READY";
+        aiStatusDot.classList.replace('animate-pulse', 'animate-none');
         aiStatusDot.classList.replace('bg-gray-400', 'bg-green-500');
         aiStatusText.parentElement.classList.replace('bg-gray-200', 'bg-green-100');
         aiStatusText.parentElement.classList.replace('text-gray-500', 'text-green-600');
@@ -59,24 +59,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         aiStatusText.textContent = "AI FAILED";
         aiStatusDot.classList.replace('bg-gray-400', 'bg-red-500');
         console.error(e);
-        alert("Failed to load AI. Please check your internet connection.");
+        alert("Failed to load AI. Please check your console for errors.");
     }
 
+    // THE FIX: Timeout Guard for PyScript
     function waitForPython() {
         return new Promise((resolve) => {
+            let attempts = 0;
+            const maxAttempts = 40; // 10 seconds total
+
             const check = () => {
+                attempts++;
                 try {
-                    if (window.pyscript && pyscript.interpreter && pyscript.interpreter.globals.get('aligner')) {
-                        return resolve();
+                    if (window.pyscript && window.pyscript.interpreter) {
+                        const pyAligner = window.pyscript.interpreter.globals.get('aligner');
+                        if (pyAligner) {
+                            console.log("Python Aligner Ready!");
+                            return resolve();
+                        }
                     }
                 } catch(e) {}
+
+                if (attempts >= maxAttempts) {
+                    console.warn("Python took too long. Forcing UI unlock.");
+                    return resolve(); 
+                }
+                
                 setTimeout(check, 250);
             };
             check();
         });
     }
 
-    // --- 3. Setup Canvas & Listeners ---
+    // --- 2. Setup Canvas & Listeners ---
     function updateCanvasSize() {
         const dims = RATIOS[currentRatio];
         canvas.width = dims.w;
@@ -84,16 +99,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCurrentFrame();
     }
     
-    // Ratio Button Logic
     ratioBtns.forEach(btn => {
         btn.addEventListener('click', async (e) => {
-            // UI Update
-            ratioBtns.forEach(b => b.classList.add('opacity-60'));
+            ratioBtns.forEach(b => {
+                b.classList.add('opacity-60');
+                b.classList.remove('active-ratio');
+            });
             btn.classList.remove('opacity-60');
+            btn.classList.add('active-ratio');
             
             currentRatio = btn.dataset.ratio;
             
-            // Smooth Canvas Resize Animation
             const container = document.getElementById('canvas-container');
             container.style.transform = "scale(0.95)";
             
@@ -105,14 +121,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Scale Slider Logic
     if (sliderScale) {
         sliderScale.addEventListener('input', (e) => {
             currentScale = parseFloat(e.target.value);
             scaleLabel.textContent = `${Math.round(currentScale * 100)}%`;
         });
         
-        // Reprocess images when user finishes dragging slider
         sliderScale.addEventListener('change', async () => {
             if (originalImages.length > 0) {
                 dropZone.querySelector('div').textContent = "Re-aligning...";
@@ -124,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateCanvasSize();
 
-    // --- 4. Handle File Uploads ---
+    // --- 3. Handle File Uploads ---
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -146,7 +160,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         dropZone.querySelector('div').textContent = "Deep Scanning Faces...";
         
-        // Scan images and save originals
         for (const file of files) {
             const img = await loadImage(file);
             const coords = await ai.analyzeImage(img);
@@ -158,7 +171,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Align and render all loaded images
         await reprocessFrames();
 
         dropZone.querySelector('div').textContent = "Tap to add photos,";
@@ -174,22 +186,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Helper: Reprocess alignment when Scale or Ratio changes
     async function reprocessFrames() {
         if (originalImages.length === 0) return;
         
-        let pythonAligner = pyscript.interpreter.globals.get('aligner');
+        let pythonAligner = null;
+        try {
+            pythonAligner = window.pyscript.interpreter.globals.get('aligner');
+        } catch (e) {
+            alert("Python engine is offline or glitched. Please refresh the page.");
+            return;
+        }
+
         const outW = RATIOS[currentRatio].w;
         const outH = RATIOS[currentRatio].h;
         
-        // Pause playback temporarily
         const wasPlaying = isPlaying;
         if (isPlaying) {
             isPlaying = false;
             clearTimeout(playbackTimer);
         }
         
-        frames = []; // Clear current frames
+        frames = []; 
         
         for (const item of originalImages) {
             const tempCanvas = document.createElement('canvas');
@@ -200,7 +217,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const imgData = tempCtx.getImageData(0, 0, item.img.width, item.img.height);
             
             try {
-                // Pass new `currentScale` to Python
                 const alignedPixelsProxy = pythonAligner.align_face(
                     imgData.data, item.img.width, item.img.height,
                     item.coords.leftEye.x, item.coords.leftEye.y,
@@ -221,14 +237,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alignedPixelsProxy.destroy();
 
             } catch (pythonError) {
-                console.error("Python alignment failed for an image:", pythonError);
+                console.error("Python alignment failed:", pythonError);
             }
         }
 
-        // Keep current frame in bounds
         if (currentFrame >= frames.length) currentFrame = 0;
         
-        // Resume playback if it was running
         if (wasPlaying && frames.length > 1) {
             isPlaying = true;
             startPlayback();
@@ -249,14 +263,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- 5. Playback Loop ---
+    // --- 4. Playback Loop ---
     function startPlayback() {
         if (playbackTimer) clearTimeout(playbackTimer);
         if (!isPlaying || frames.length === 0) return;
         
         renderCurrentFrame();
         currentFrame = (currentFrame + 1) % frames.length;
-        
         playbackTimer = setTimeout(startPlayback, playbackSpeed * 1000);
     }
 
@@ -275,7 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (toggleGuides && toggleGuides.checked) {
             const outW = canvas.width;
             const outH = canvas.height;
-            const eyeDist = outW * currentScale; // Use dynamic scale
+            const eyeDist = outW * currentScale; 
             const centerY = outH * 0.40;
             const centerX = outW * 0.5;
             
@@ -286,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             ctx.beginPath();
             ctx.arc(centerX - (eyeDist/2), centerY, 15, 0, Math.PI * 2);
             ctx.stroke();
-            
             ctx.beginPath();
             ctx.arc(centerX + (eyeDist/2), centerY, 15, 0, Math.PI * 2);
             ctx.stroke();
@@ -313,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (toggleGuides) toggleGuides.addEventListener('change', renderCurrentFrame);
 
-    // --- 6. Export Logic ---
+    // --- 5. Export Logic ---
     btnExport.addEventListener('click', async () => {
         if (frames.length === 0) return;
         
