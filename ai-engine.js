@@ -1,5 +1,4 @@
 import { FaceLandmarker, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.js';
-
 export class AIEngine {
     constructor() {
         this.faceLandmarker = null;
