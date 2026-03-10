@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await ai.initialize();
         
-        // Anti-Hang Protocol: Wait for Python, but don't wait forever
+        // CRITICAL FIX: Wait for Python via the window object
         await waitForPython();
         
         aiStatusText.textContent = "AI READY";
@@ -62,27 +62,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert("Failed to load AI. Please check your console for errors.");
     }
 
-    // THE FIX: Timeout Guard for PyScript
+    // NEW PYTHON WAITER: Looks directly at the window object
     function waitForPython() {
         return new Promise((resolve) => {
             let attempts = 0;
-            const maxAttempts = 40; // 10 seconds total
+            const maxAttempts = 120; // 30 seconds max
 
             const check = () => {
                 attempts++;
-                try {
-                    if (window.pyscript && window.pyscript.interpreter) {
-                        const pyAligner = window.pyscript.interpreter.globals.get('aligner');
-                        if (pyAligner) {
-                            console.log("Python Aligner Ready!");
-                            return resolve();
-                        }
-                    }
-                } catch(e) {}
+                // If aligner.py correctly pushed to window.aligner, we are good!
+                if (window.aligner) {
+                    console.log("Python Bridge Connected!");
+                    return resolve(true);
+                }
 
                 if (attempts >= maxAttempts) {
-                    console.warn("Python took too long. Forcing UI unlock.");
-                    return resolve(); 
+                    console.warn("Python timed out. UI unlocked anyway.");
+                    return resolve(false); 
                 }
                 
                 setTimeout(check, 250);
@@ -189,11 +185,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function reprocessFrames() {
         if (originalImages.length === 0) return;
         
-        let pythonAligner = null;
-        try {
-            pythonAligner = window.pyscript.interpreter.globals.get('aligner');
-        } catch (e) {
-            alert("Python engine is offline or glitched. Please refresh the page.");
+        // CRITICAL FIX: Grab aligner directly from the window
+        const pythonAligner = window.aligner;
+        if (!pythonAligner) {
+            alert("Python engine is still loading or glitched. Please refresh the page.");
             return;
         }
 
