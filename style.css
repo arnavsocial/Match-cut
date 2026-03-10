@@ -1,0 +1,156 @@
+/* ==========================================================================
+   Base & Variables
+   ========================================================================== */
+:root {
+    --bg-color: #f5f5f7;
+    --surface-color: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --accent-blue: #3b82f6;
+    --nebula-core: #1e40af;
+    --nebula-mid: #0f172a;
+    --nebula-dark: #020617;
+    --squircle-radius: 22px;
+    --spring-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar for a cleaner look */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+/* ==========================================================================
+   Custom UI Components
+   ========================================================================== */
+
+/* The "Apple-style" smooth corners */
+.squircle {
+    border-radius: var(--squircle-radius);
+}
+
+/* THE TEXTURE: Deep Blue Nebula for the main export button / active states */
+.texture-bg {
+    background: radial-gradient(circle at 20% 0%, var(--nebula-core) 0%, var(--nebula-mid) 60%, var(--nebula-dark) 100%);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* ==========================================================================
+   Custom Range Slider
+   ========================================================================== */
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: #e5e5e5;
+    border-radius: 999px;
+    transition: background 0.3s ease;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--accent-blue), var(--nebula-mid));
+    cursor: pointer;
+    margin-top: -9px; /* Centers the thumb on the track */
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s var(--spring-easing);
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+input[type=range]:active::-webkit-slider-thumb {
+    transform: scale(0.95);
+}
+
+/* ==========================================================================
+   Circular Checkbox (for toggles like "Show Guides")
+   ========================================================================== */
+.checkbox-circle {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #e5e7eb;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    background-color: var(--surface-color);
+    transition: all 0.3s var(--spring-easing);
+    margin: 0;
+}
+
+.checkbox-circle:hover {
+    border-color: #94a3b8;
+    transform: scale(1.05);
+}
+
+.checkbox-circle:checked {
+    border-color: transparent;
+    background: radial-gradient(circle at 20% 0%, var(--nebula-core) 0%, var(--nebula-mid) 60%, var(--nebula-dark) 100%);
+    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+}
+
+/* The Checkmark Icon */
+.checkbox-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 6px;
+    border-left: 2.5px solid white;
+    border-bottom: 2.5px solid white;
+    transform: translate(-50%, -65%) rotate(-45deg) scale(0);
+    transition: transform 0.25s var(--spring-easing), opacity 0.2s ease;
+    opacity: 0;
+}
+
+.checkbox-circle:checked::after {
+    transform: translate(-50%, -65%) rotate(-45deg) scale(1);
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Animations & Transitions
+   ========================================================================== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Canvas Container 3D effect */
+.perspective-1000 {
+    perspective: 1000px;
+}
