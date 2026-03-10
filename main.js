@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentRatio = e.target.value;
         updateCanvasSize();
         // Note: Changing ratio requires reprocessing for perfect Procrustes alignment.
-        // For a production app, you would re-trigger processImages() here.
     });
     updateCanvasSize();
 
@@ -84,13 +83,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (files.length === 0) return;
 
         // Visual feedback
-        dropZone.querySelector('div').textContent = "Processing...";
+        dropZone.querySelector('div').textContent = "Deep Scanning Faces...";
         
         // Ensure PyScript is loaded and aligner is available
-        // In PyScript, Python variables are attached to the pyscript interpreter globals
         let pythonAligner = null;
         try {
-            // Retrieve the 'aligner' instance we created in aligner.py
             pythonAligner = pyscript.interpreter.globals.get('aligner');
         } catch (err) {
             console.warn("PyScript not fully loaded yet or aligner missing.", err);
@@ -105,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         for (const file of files) {
             const img = await loadImage(file);
             
-            // 1. Get exact pupil coordinates from WebGPU Transformer
+            // 1. Get exact coordinates from WebGPU Transformer (Eyes + Nose)
             const coords = await ai.analyzeImage(img);
             
             if (coords) {
@@ -117,12 +114,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tempCtx.drawImage(img, 0, 0);
                 const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
                 
-                // 3. Pass data to Python for Procrustes Alignment (OpenCV)
+                // 3. Pass data to Python for 3-Point Affine Alignment
                 try {
                     const alignedPixelsProxy = pythonAligner.align_face(
                         imgData.data, img.width, img.height,
                         coords.leftEye.x, coords.leftEye.y,
                         coords.rightEye.x, coords.rightEye.y,
+                        coords.nose.x, coords.nose.y, // <-- Added Nose Coordinates
                         outW, outH
                     );
                     
@@ -144,6 +142,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (pythonError) {
                     console.error("Python alignment failed for an image:", pythonError);
                 }
+            } else {
+                console.warn(`AI completely missed a face in one of the uploaded images.`);
             }
         }
 
