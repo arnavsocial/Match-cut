@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 from pyodide.ffi import to_js
-from js import window # <-- CRITICAL NEW IMPORT
+
+# 1. We import the browser's 'window' memory into Python
+from js import window 
 
 class FaceAligner:
     def __init__(self, target_eye_y_ratio=0.4):
@@ -41,5 +43,5 @@ class FaceAligner:
         
         return to_js(aligned_img.flatten())
 
-# Push the aligner directly to the JavaScript window object!
+# 2. We push the aligner into the shared window memory!
 window.aligner = FaceAligner()
