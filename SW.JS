@@ -1,32 +1,27 @@
-const CACHE_NAME = 'match-cut-ai-cache-v1';
-
-const CACHE_URLS = [
-    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.js',
-    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.wasm',
-    'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
-];
+const CACHE_NAME = 'match-cut-ai-cache-v2';
 
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Pre-caching AI models...');
-            return cache.addAll(CACHE_URLS);
-        })
-    );
+    // Skip waiting ensures the new worker activates immediately
     self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+    // Take control of the page immediately upon activation
     event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
+    // Dynamically cache ALL MediaPipe and AI Model files as they are requested
     if (event.request.url.includes('mediapipe') || event.request.url.includes('cdn.jsdelivr.net')) {
         event.respondWith(
             caches.match(event.request).then((cachedResponse) => {
                 if (cachedResponse) {
-                    return cachedResponse;
+                    // Serve lightning fast from the local cache
+                    console.log('[Service Worker] Serving from cache:', event.request.url);
+                    return cachedResponse; 
                 }
+                
+                // If not in cache, fetch it from the internet and save it for next time
                 return fetch(event.request).then((networkResponse) => {
                     return caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, networkResponse.clone());
