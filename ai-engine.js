@@ -1,66 +1,75 @@
-import { FaceLandmarker, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.mjs';
+import {
+    FaceLandmarker,
+    FilesetResolver
+} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32';
+
+const LEFT_IRIS  = [468, 469, 470, 471, 472];
+const RIGHT_IRIS = [473, 474, 475, 476, 477];
+const NOSE_TIP   = 4;
+const CHIN       = 152;
+const FOREHEAD   = 10;
 
 export class AIEngine {
     constructor() {
-        this.faceLandmarker = null;
-        this.isReady = false;
+        this.landmarker = null;
+        this.isReady    = false;
     }
 
-    async initialize() {
-        console.log("Initializing Vision Engine...");
+    async initialize(onStatus) {
+        onStatus?.('Checking Cache & Loading AI...');
         try {
-            // 1. Load the WebAssembly backend
+            // UPDATED WASM URL
             const vision = await FilesetResolver.forVisionTasks(
-                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm'
+                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm'
             );
 
-            // 2. Initialize the Face Landmarker
-            this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+            this.landmarker = await FaceLandmarker.createFromOptions(vision, {
                 baseOptions: {
                     modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
-                    delegate: 'CPU' 
+                    delegate: 'GPU' 
                 },
                 runningMode: 'IMAGE',
                 numFaces: 1,
-                minDetectionConfidence: 0.1,
-                minFacePresenceConfidence: 0.1,
-                minTrackingConfidence: 0.1
+                minDetectionConfidence:    0.3, 
+                minFacePresenceConfidence: 0.3,
+                minTrackingConfidence:     0.3,
+                outputFaceBlendshapes: false 
             });
 
             this.isReady = true;
-            console.log("Vision Engine loaded successfully.");
+            onStatus?.('AI Ready');
             return true;
-
-        } catch (error) {
-            console.error("AI Init Error:", error);
-            throw new Error("Failed to load FaceLandmarker.");
+        } catch (err) {
+            console.error('GPU init failed, falling back to CPU:', err);
+            try {
+                onStatus?.('Loading CPU Fallback...');
+                 // UPDATED WASM URL FOR FALLBACK
+                 const vision = await FilesetResolver.forVisionTasks(
+                     'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm'
+                 );
+                 this.landmarker = await FaceLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+                        delegate: 'CPU'
+                    },
+                    runningMode: 'IMAGE',
+                    numFaces: 1
+                });
+                this.isReady = true;
+                onStatus?.('AI Ready (CPU)');
+                return true;
+            } catch(cpuErr) {
+                throw new Error('AI Model failed to load entirely. Please check your network connection.');
+            }
         }
     }
 
-    async analyzeImage(imageElement) {
-        if (!this.isReady || !this.faceLandmarker) {
-            console.error("Attempted to analyze before AI was ready.");
-            return null;
-        }
-
-        // 3. Run the detection on the provided image
-        const results = this.faceLandmarker.detect(imageElement);
-
-        if (!results.faceLandmarks || results.faceLandmarks.length === 0) {
-            console.warn("Scan missed the face.");
-            return null;
-        }
-
-        const lm = results.faceLandmarks[0];
-        
-        const width = imageElement.naturalWidth || imageElement.width;
-        const height = imageElement.naturalHeight || imageElement.height;
-        
-        // 4. Return the 3 exact anchor points
-        return {
-            leftEye: { x: lm[468].x * width, y: lm[468].y * height }, 
-            rightEye: { x: lm[473].x * width, y: lm[473].y * height }, 
-            nose: { x: lm[1].x * width, y: lm[1].y * height }          
-        };
-    }
+    // ... Keep the rest of your ai-engine.js methods exactly the same ...
+    async analyzeImage(img) { /* ... */ }
+    _runDetection(imgEl) { /* ... */ }
+    _runDetectionRaw(imgEl) { /* ... */ }
+    _remapToOriginal(lm, refImg) { /* ... */ }
+    _avgCluster(lm, indices, w, h) { /* ... */ }
+    _applyFilter(img, filter) { /* ... */ }
+    _scaleDown(img, maxSide) { /* ... */ }
 }
