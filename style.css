@@ -1,0 +1,230 @@
+/* ==========================================================================
+   Match Cut — style.css v2.0
+   ========================================================================== */
+
+:root {
+    --bg:             #f0f0f2;
+    --surface:        #ffffff;
+    --ink:            #0e0e10;
+    --ink-secondary:  #86868b;
+    --accent:         #2563eb;
+    --accent-dark:    #1e3a8a;
+    --squircle-r:     20px;
+    --squircle-r-sm:  12px;
+    --spring:         cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 0; background: transparent; }
+
+/* ==========================================================================
+   Squircle shapes
+   ========================================================================== */
+.squircle    { border-radius: var(--squircle-r); }
+.squircle-sm { border-radius: var(--squircle-r-sm); }
+
+/* ==========================================================================
+   Export button gradient
+   ========================================================================== */
+.export-bg {
+    background: linear-gradient(135deg,
+        #1e3a8a 0%,
+        #1d4ed8 40%,
+        #0f172a 100%
+    );
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+        0 4px 24px rgba(30, 58, 138, 0.45),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.export-bg:not(:disabled):hover {
+    box-shadow:
+        0 8px 32px rgba(30, 58, 138, 0.55),
+        inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+/* ==========================================================================
+   Range slider
+   ========================================================================== */
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+    cursor: pointer;
+}
+input[type=range]:focus { outline: none; }
+
+input[type=range]::-webkit-slider-runnable-track {
+    height: 5px;
+    background: #e4e4e7;
+    border-radius: 999px;
+    transition: background 0.2s;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--accent), var(--accent-dark));
+    border: 2.5px solid #fff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    margin-top: -8.5px;
+    transition: transform 0.15s var(--spring), box-shadow 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.18);
+    box-shadow: 0 3px 14px rgba(37, 99, 235, 0.45);
+}
+input[type=range]:active::-webkit-slider-thumb {
+    transform: scale(0.92);
+}
+
+/* Firefox */
+input[type=range]::-moz-range-track {
+    height: 5px;
+    background: #e4e4e7;
+    border-radius: 999px;
+}
+input[type=range]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2.5px solid #fff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Circular Checkbox
+   ========================================================================== */
+.checkbox-circle {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 26px;
+    height: 26px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    background: var(--surface);
+    transition: all 0.25s var(--spring);
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.checkbox-circle:hover {
+    border-color: #93c5fd;
+    transform: scale(1.06);
+}
+
+.checkbox-circle:checked {
+    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(29, 78, 216, 0.35);
+}
+
+.checkbox-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 9px; height: 5.5px;
+    border-left: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: translate(-50%, -65%) rotate(-45deg) scale(0);
+    transition: transform 0.2s var(--spring), opacity 0.15s;
+    opacity: 0;
+}
+
+.checkbox-circle:checked::after {
+    transform: translate(-50%, -65%) rotate(-45deg) scale(1);
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Drop zone states
+   ========================================================================== */
+#drop-zone.drag-over {
+    border-color: var(--accent) !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+    transform: scale(1.01);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* ==========================================================================
+   Progress bar animation
+   ========================================================================== */
+#progress-bar {
+    background: linear-gradient(90deg, var(--accent), #60a5fa);
+    position: relative;
+    overflow: hidden;
+}
+
+#progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,0.35) 50%,
+        transparent 100%
+    );
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    to { left: 100%; }
+}
+
+/* ==========================================================================
+   Canvas container aspect ratio switching
+   ========================================================================== */
+#canvas-container[data-ratio="1:1"]  { aspect-ratio: 1 / 1; }
+#canvas-container[data-ratio="9:16"] { aspect-ratio: 9 / 16; }
+#canvas-container[data-ratio="16:9"] { aspect-ratio: 16 / 9; }
+
+/* ==========================================================================
+   AI Status Badge pulse animation (while loading)
+   ========================================================================== */
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+#ai-status-dot.loading {
+    animation: pulse-dot 1s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Fade-in utility
+   ========================================================================== */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeUp 0.35s var(--ease-out) forwards;
+}
+
+/* ==========================================================================
+   Scrollbar hidden on controls pane
+   ========================================================================== */
+.overflow-y-auto::-webkit-scrollbar { display: none; }
+.overflow-y-auto { -ms-overflow-style: none; scrollbar-width: none; }
