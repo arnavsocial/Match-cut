@@ -1,16 +1,7 @@
-/**
- * main.js — Match Cut Orchestrator
- *
- * Coordinates the AI detection engine, JavaScript face aligner,
- * playback, and export pipelines (GIF + MP4/WebM).
- */
-
 import { AIEngine }    from './ai-engine.js';
 import { FaceAligner } from './aligner.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-
-    // ── UI References ─────────────────────────────────────────────────────
     const dropZone      = document.getElementById('drop-zone');
     const fileInput     = document.getElementById('file-input');
     const canvas        = document.getElementById('preview-canvas');
@@ -20,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const iconPause     = document.getElementById('icon-pause');
     const sliderSpeed   = document.getElementById('slider-speed');
     const speedLabel    = document.getElementById('speed-label');
+    const sliderZoom    = document.getElementById('slider-zoom'); // NEW
+    const zoomLabel     = document.getElementById('zoom-label');  // NEW
     const frameCounter  = document.getElementById('frame-counter');
     const btnExport     = document.getElementById('btn-export');
     const exportText    = document.getElementById('export-text');
@@ -35,29 +28,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     const uploadCount   = document.getElementById('upload-count');
     const btnClear      = document.getElementById('btn-clear');
 
-    // ── App State ─────────────────────────────────────────────────────────
     const RATIOS = {
         '1:1':  { w: 1024, h: 1024 },
         '9:16': { w: 1080, h: 1920 },
         '16:9': { w: 1920, h: 1080 },
     };
 
-    // Raw source images + their detected landmarks, stored so we can
-    // re-align any time the output ratio changes — without re-running AI.
-    let sourceImages = [];   // [{ img, landmarks }]
-    let frames       = [];   // [{ canvas }] — aligned output frames
+    // NEW: Speed mapping so moving the slider RIGHT makes it FASTER
+    const SPEED_PRESETS = {
+        1: { label: 'Very Slow', fps: 1 },
+        2: { label: 'Slow',      fps: 2.5 },
+        3: { label: 'Normal',    fps: 5 },
+        4: { label: 'Fast',      fps: 10 },
+        5: { label: 'Very Fast', fps: 15 },
+        6: { label: 'Rapid',     fps: 20 },
+        7: { label: 'Hyper',     fps: 30 }
+    };
+
+    let sourceImages = [];   
+    let frames       = [];   
     let isPlaying    = true;
     let currentFrame = 0;
-    let playbackSpeed= parseFloat(sliderSpeed.value);
-    let currentRatio = '1:1';
-    let playbackTimer= null;
-    let exportFormat = 'gif';
+    
+    // UI State
+    let currentSpeedLevel = parseInt(sliderSpeed.value);
+    let playbackFps       = SPEED_PRESETS[currentSpeedLevel].fps;
+    let currentZoom       = parseFloat(sliderZoom.value);
+    let currentRatio      = '1:1';
+    let playbackTimer     = null;
+    let exportFormat      = 'gif';
 
-    // ── Engines ───────────────────────────────────────────────────────────
     const ai      = new AIEngine();
     const aligner = new FaceAligner({ eyeYRatio: 0.38, eyeDistRatio: 0.40 });
 
-    // ── 1. Initialise AI ──────────────────────────────────────────────────
     try {
         await ai.initialize((msg) => {
             aiStatusText.textContent = msg.toUpperCase();
@@ -86,7 +89,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ── 2. Canvas Size ────────────────────────────────────────────────────
     function updateCanvasSize() {
         const d    = RATIOS[currentRatio];
         canvas.width  = d.w;
@@ -97,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentRatio = e.target.value;
         updateCanvasSize();
         if (sourceImages.length > 0) {
-            // Re-align all stored source images at new dimensions
             showProgress('Re-aligning…', 0);
             frames = [];
             for (let i = 0; i < sourceImages.length; i++) {
@@ -118,7 +119,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCanvasSize();
     renderCurrentFrame();
 
-    // ── 3. File Upload Handling ───────────────────────────────────────────
     dropZone.addEventListener('click', () => fileInput.click());
 
     dropZone.addEventListener('dragover', (e) => {
@@ -175,7 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         hideProgress();
 
-        // Update badge
         uploadCount.textContent = `${frames.length} Loaded${skipped > 0 ? ` · ${skipped} skipped` : ''}`;
         uploadCount.classList.remove('hidden');
 
@@ -190,10 +189,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 renderCurrentFrame();
             }
-        }
-
-        if (skipped > 0) {
-            console.warn(`[Main] ${skipped} image(s) had no detectable face and were skipped.`);
         }
     }
 
@@ -211,18 +206,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // ── 4. Playback ───────────────────────────────────────────────────────
     function startPlayback() {
         if (playbackTimer) clearTimeout(playbackTimer);
         if (!isPlaying || frames.length === 0) return;
         renderCurrentFrame();
         currentFrame = (currentFrame + 1) % frames.length;
-        playbackTimer = setTimeout(startPlayback, playbackSpeed * 1000);
+        // Convert Frames-Per-Second into Milliseconds-Per-Frame
+        playbackTimer = setTimeout(startPlayback, 1000 / playbackFps);
     }
 
     function stopPlayback() {
         clearTimeout(playbackTimer);
         playbackTimer = null;
+    }
+
+    // NEW: Centralized drawing function so Preview and Exports share the exact same zoom logic
+    function drawFrame(index) {
+        const frame = frames[index];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save();
+        // Zoom relative to the exact center of the canvas
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(currentZoom, currentZoom);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        
+        ctx.drawImage(frame.canvas, 0, 0);
+        ctx.restore();
     }
 
     function renderCurrentFrame() {
@@ -232,12 +242,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             frameCounter.textContent = '0 / 0';
             return;
         }
-        const frame = frames[currentFrame];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(frame.canvas, 0, 0);
-
+        
+        drawFrame(currentFrame);
         if (toggleGuides.checked) drawGuides();
-
         frameCounter.textContent = `${currentFrame + 1} / ${frames.length}`;
     }
 
@@ -254,17 +261,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.lineWidth   = Math.max(2, W / 512);
         ctx.globalAlpha = 0.65;
 
-        // Left eye ring
         ctx.beginPath();
         ctx.arc(cx - eyeDist / 2, cy, r, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Right eye ring
         ctx.beginPath();
         ctx.arc(cx + eyeDist / 2, cy, r, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Horizontal reference line
         ctx.globalAlpha = 0.25;
         ctx.setLineDash([8, 8]);
         ctx.beginPath();
@@ -275,7 +279,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.restore();
     }
 
-    // ── 5. UI Controls ────────────────────────────────────────────────────
     btnPlayPause.addEventListener('click', () => {
         isPlaying = !isPlaying;
         iconPlay.classList.toggle('hidden',  isPlaying);
@@ -284,15 +287,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         else stopPlayback();
     });
 
+    // NEW: Slider Speed mapped to Words
     sliderSpeed.addEventListener('input', (e) => {
-        playbackSpeed = parseFloat(e.target.value);
-        speedLabel.textContent = `${playbackSpeed.toFixed(2)}s`;
+        currentSpeedLevel = parseInt(e.target.value);
+        const preset      = SPEED_PRESETS[currentSpeedLevel];
+        
+        playbackFps       = preset.fps;
+        speedLabel.textContent = preset.label;
+        
         if (isPlaying) { stopPlayback(); startPlayback(); }
+    });
+
+    // NEW: Slider Zoom scaling
+    sliderZoom.addEventListener('input', (e) => {
+        currentZoom = parseFloat(e.target.value);
+        zoomLabel.textContent = currentZoom.toFixed(2) + 'x';
+        
+        // Update immediately if the video is paused
+        if (!isPlaying) renderCurrentFrame();
     });
 
     toggleGuides.addEventListener('change', renderCurrentFrame);
 
-    // Format toggle
     fmtGif.addEventListener('click', () => {
         exportFormat = 'gif';
         fmtGif.classList.add('bg-gray-100','text-black','shadow-inner');
@@ -323,13 +339,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCurrentFrame();
     });
 
-    // ── 6. Export ─────────────────────────────────────────────────────────
     btnExport.addEventListener('click', () => {
         if (exportFormat === 'mp4') exportMP4();
         else exportGIF();
     });
 
-    // GIF export (gif.js)
     async function exportGIF() {
         if (frames.length === 0) return;
 
@@ -350,10 +364,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         for (let i = 0; i < frames.length; i++) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(frames[i].canvas, 0, 0);
-            gif.addFrame(ctx, { copy: true, delay: Math.round(playbackSpeed * 1000) });
-            setProgress((i + 1) / frames.length * 0.5); // first 50%
+            // Draw frame utilizing our new zoom logic before exporting
+            drawFrame(i);
+            gif.addFrame(ctx, { copy: true, delay: Math.round(1000 / playbackFps) });
+            setProgress((i + 1) / frames.length * 0.5); 
         }
 
         gif.on('progress', p => setProgress(0.5 + p * 0.5));
@@ -370,11 +384,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         gif.render();
     }
 
-    // MP4 export via MediaRecorder (outputs WebM/VP9, saved as .mp4)
     async function exportMP4() {
         if (frames.length === 0) return;
 
-        // Check support
         if (!window.MediaRecorder) {
             return alert('MP4 export requires MediaRecorder API (Chrome/Edge/Firefox).');
         }
@@ -411,25 +423,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         recorder.start();
 
-        // Play through frames 3× for a proper looping clip
         const LOOPS        = 3;
         const totalFrames  = frames.length * LOOPS;
         let drawn          = 0;
 
         for (let loop = 0; loop < LOOPS; loop++) {
             for (let i = 0; i < frames.length; i++) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(frames[i].canvas, 0, 0);
+                // Draw frame utilizing our new zoom logic before exporting
+                drawFrame(i);
                 drawn++;
                 setProgress(drawn / totalFrames);
-                await sleep(playbackSpeed * 1000);
+                await sleep(1000 / playbackFps);
             }
         }
 
         recorder.stop();
     }
 
-    // ── Progress Helpers ─────────────────────────────────────────────────
     function showProgress(label, val) {
         progressWrap.classList.remove('hidden');
         setProgressLabel(label);
@@ -445,7 +455,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         progressLabel.textContent = text;
     }
 
-    // ── Misc Helpers ─────────────────────────────────────────────────────
     function download(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a');
