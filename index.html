@@ -55,7 +55,7 @@
 
     <div class="flex-1 flex flex-col md:flex-row overflow-hidden p-4 md:p-6 gap-5 min-h-0">
         <div class="w-full h-[42vh] md:h-full md:flex-1 flex items-center justify-center min-h-0">
-            <div id="canvas-container" class="relative squircle overflow-hidden bg-[#111] shadow-2xl border border-black/10 transition-all duration-500" style="max-height:100%; max-width:100%; aspect-ratio:1/1;">
+            <div id="canvas-container" data-ratio="1:1" class="relative squircle overflow-hidden bg-[#111] shadow-2xl border border-black/10 transition-all duration-500" style="max-height:100%; max-width:100%;">
                 <canvas id="preview-canvas" class="w-full h-full object-contain block"></canvas>
                 <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-4 px-5 py-2 rounded-full bg-black/30 backdrop-blur-xl border border-white/8 text-white/80 shadow-xl hover:bg-black/40 transition-all duration-200">
                     <button id="btn-play-pause" class="hover:text-white transition-colors">
@@ -104,7 +104,7 @@
                 </div>
             </div>
 
-      <div class="space-y-2">
+            <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Zoom</span>
                     <span id="zoom-label" class="font-mono text-xs text-gray-500">1.00x</span>
@@ -115,9 +115,9 @@
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Speed</span>
-                    <span id="speed-label" class="font-mono text-xs text-gray-500">Normal</span>
+                    <span id="speed-label" class="font-mono text-xs text-gray-500">1.0x</span>
                 </div>
-                <input type="range" id="slider-speed" min="1" max="7" step="1" value="3">
+                <input type="range" id="slider-speed" min="0.1" max="5.0" step="0.1" value="1.0">
             </div>
 
             <div class="space-y-2">
@@ -146,9 +146,9 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registered. AI caching enabled!'))
-                    .catch(err => console.error('Service Worker registration failed:', err));
+                let repoName = window.location.pathname.split('/')[1];
+                let swPath = window.location.hostname.includes('github.io') && repoName ? `/${repoName}/sw.js` : 'sw.js';
+                navigator.serviceWorker.register(swPath).catch(err => console.error(err));
             });
         }
     </script>
