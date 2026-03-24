@@ -4,15 +4,18 @@ import { FaceAligner } from './aligner.js';
 document.addEventListener('DOMContentLoaded', async () => {
     const dropZone      = document.getElementById('drop-zone');
     const fileInput     = document.getElementById('file-input');
+    const canvasContainer= document.getElementById('canvas-container'); // NEW
     const canvas        = document.getElementById('preview-canvas');
     const ctx           = canvas.getContext('2d');
     const btnPlayPause  = document.getElementById('btn-play-pause');
     const iconPlay      = document.getElementById('icon-play');
     const iconPause     = document.getElementById('icon-pause');
+    
     const sliderSpeed   = document.getElementById('slider-speed');
     const speedLabel    = document.getElementById('speed-label');
-    const sliderZoom    = document.getElementById('slider-zoom'); // NEW
-    const zoomLabel     = document.getElementById('zoom-label');  // NEW
+    const sliderZoom    = document.getElementById('slider-zoom'); 
+    const zoomLabel     = document.getElementById('zoom-label');  
+    
     const frameCounter  = document.getElementById('frame-counter');
     const btnExport     = document.getElementById('btn-export');
     const exportText    = document.getElementById('export-text');
@@ -34,16 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         '16:9': { w: 1920, h: 1080 },
     };
 
-    // NEW: Speed mapping so moving the slider RIGHT makes it FASTER
-    const SPEED_PRESETS = {
-        1: { label: 'Very Slow', fps: 1 },
-        2: { label: 'Slow',      fps: 2.5 },
-        3: { label: 'Normal',    fps: 5 },
-        4: { label: 'Fast',      fps: 10 },
-        5: { label: 'Very Fast', fps: 15 },
-        6: { label: 'Rapid',     fps: 20 },
-        7: { label: 'Hyper',     fps: 30 }
-    };
+    // Base delay for 1.0x speed is 200ms per frame (5 FPS)
+    const BASE_DELAY_MS = 200; 
 
     let sourceImages = [];   
     let frames       = [];   
@@ -51,12 +46,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentFrame = 0;
     
     // UI State
-    let currentSpeedLevel = parseInt(sliderSpeed.value);
-    let playbackFps       = SPEED_PRESETS[currentSpeedLevel].fps;
-    let currentZoom       = parseFloat(sliderZoom.value);
-    let currentRatio      = '1:1';
-    let playbackTimer     = null;
-    let exportFormat      = 'gif';
+    let currentSpeedMultiplier = parseFloat(sliderSpeed.value);
+    let currentZoom            = parseFloat(sliderZoom.value);
+    let currentRatio           = '1:1';
+    let playbackTimer          = null;
+    let exportFormat           = 'gif';
 
     const ai      = new AIEngine();
     const aligner = new FaceAligner({ eyeYRatio: 0.38, eyeDistRatio: 0.40 });
@@ -90,9 +84,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateCanvasSize() {
-        const d    = RATIOS[currentRatio];
+        const d = RATIOS[currentRatio];
         canvas.width  = d.w;
         canvas.height = d.h;
+        // FIX: Update the container's data attribute so CSS applies the correct aspect ratio visually
+        canvasContainer.setAttribute('data-ratio', currentRatio);
     }
 
     ratioSelect.addEventListener('change', async (e) => {
@@ -125,14 +121,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         dropZone.classList.add('drag-over');
     });
-    dropZone.addEventListener('dragleave', () =>
-        dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
         handleFiles(e.dataTransfer.files);
     });
+    
     fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
     async function handleFiles(fileList) {
@@ -211,8 +207,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!isPlaying || frames.length === 0) return;
         renderCurrentFrame();
         currentFrame = (currentFrame + 1) % frames.length;
-        // Convert Frames-Per-Second into Milliseconds-Per-Frame
-        playbackTimer = setTimeout(startPlayback, 1000 / playbackFps);
+        
+        // FIX: Math calculation. If base delay is 200ms and speed is 2.0x, new delay is 100ms.
+        const dynamicDelay = BASE_DELAY_MS / currentSpeedMultiplier;
+        playbackTimer = setTimeout(startPlayback, dynamicDelay);
     }
 
     function stopPlayback() {
@@ -220,10 +218,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         playbackTimer = null;
     }
 
-    // NEW: Centralized drawing function so Preview and Exports share the exact same zoom logic
+    // FIX: Master drawing function that applies zoom perfectly from the center
     function drawFrame(index) {
         const frame = frames[index];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Fill background to prevent transparent ghosting when zoomed out
+        ctx.fillStyle = '#111111'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.save();
         // Zoom relative to the exact center of the canvas
@@ -231,6 +232,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.scale(currentZoom, currentZoom);
         ctx.translate(-canvas.width / 2, -canvas.height / 2);
         
+        // Use high quality image smoothing for the zoom
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(frame.canvas, 0, 0);
         ctx.restore();
     }
@@ -287,24 +291,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         else stopPlayback();
     });
 
-    // NEW: Slider Speed mapped to Words
+    // FIX: Decimal speed slider update
     sliderSpeed.addEventListener('input', (e) => {
-        currentSpeedLevel = parseInt(e.target.value);
-        const preset      = SPEED_PRESETS[currentSpeedLevel];
-        
-        playbackFps       = preset.fps;
-        speedLabel.textContent = preset.label;
-        
+        currentSpeedMultiplier = parseFloat(e.target.value);
+        speedLabel.textContent = currentSpeedMultiplier.toFixed(1) + 'x';
         if (isPlaying) { stopPlayback(); startPlayback(); }
     });
 
-    // NEW: Slider Zoom scaling
+    // FIX: Zoom slider update logic
     sliderZoom.addEventListener('input', (e) => {
         currentZoom = parseFloat(e.target.value);
         zoomLabel.textContent = currentZoom.toFixed(2) + 'x';
-        
-        // Update immediately if the video is paused
-        if (!isPlaying) renderCurrentFrame();
+        // Immediately redraw canvas so user sees the zoom happening in real-time, even when paused
+        if (!isPlaying) renderCurrentFrame(); 
     });
 
     toggleGuides.addEventListener('change', renderCurrentFrame);
@@ -357,16 +356,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const gif = new GIF({
             workers:      4,
-            quality:      8,
+            quality:      1, // FIX: 1 is the highest possible quality for the gif.js library
             width:        canvas.width,
             height:       canvas.height,
             workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
         });
 
+        const exportDelay = Math.round(BASE_DELAY_MS / currentSpeedMultiplier);
+
         for (let i = 0; i < frames.length; i++) {
-            // Draw frame utilizing our new zoom logic before exporting
+            // Because we call drawFrame, the export perfectly inherits the user's zoom settings
             drawFrame(i);
-            gif.addFrame(ctx, { copy: true, delay: Math.round(1000 / playbackFps) });
+            gif.addFrame(ctx, { copy: true, delay: exportDelay });
             setProgress((i + 1) / frames.length * 0.5); 
         }
 
@@ -403,10 +404,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? 'video/webm;codecs=vp9'
             : 'video/webm';
 
-        const stream   = canvas.captureStream(30);
+        const stream   = canvas.captureStream(60); // Capture at 60fps for maximum smoothness
         const recorder = new MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: 8_000_000
+            videoBitsPerSecond: 50_000_000 // FIX: Massive 50 Mbps bitrate for pristine, near-lossless quality
         });
         const chunks = [];
 
@@ -426,14 +427,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const LOOPS        = 3;
         const totalFrames  = frames.length * LOOPS;
         let drawn          = 0;
+        const exportDelay  = BASE_DELAY_MS / currentSpeedMultiplier;
 
         for (let loop = 0; loop < LOOPS; loop++) {
             for (let i = 0; i < frames.length; i++) {
-                // Draw frame utilizing our new zoom logic before exporting
-                drawFrame(i);
+                drawFrame(i); // Applies zoom to MP4
                 drawn++;
                 setProgress(drawn / totalFrames);
-                await sleep(1000 / playbackFps);
+                await sleep(exportDelay);
             }
         }
 
