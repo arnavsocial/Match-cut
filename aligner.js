@@ -1,42 +1,141 @@
-export class FaceAligner {
-    constructor(config = {}) {
-        this.eyeYRatio    = config.eyeYRatio    ?? 0.38;
-        this.eyeDistRatio = config.eyeDistRatio ?? 0.40;
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Match Cut | Pro Face Alignment</title>
 
-    align(sourceImage, landmarks, outW, outH, mode = 'smart') {
-        const { leftEye, rightEye } = landmarks;
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-        const eyeMidX  = (leftEye.x  + rightEye.x) / 2;
-        const eyeMidY  = (leftEye.y  + rightEye.y) / 2;
-        const dx       = rightEye.x  - leftEye.x;
-        const dy       = rightEye.y  - leftEye.y;
-        const eyeDist  = Math.sqrt(dx * dx + dy * dy);
-        
-        // Smart mode perfectly levels the face. Default mode leaves it upright.
-        const angle    = mode === 'smart' ? Math.atan2(dy, dx) : 0;   
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'], mono: ['DM Mono',  'monospace'] },
+                    colors: { bg: '#f0f0f2', surface: '#ffffff', ink: '#0e0e10' }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+</head>
 
-        const targetEyeDist = outW * this.eyeDistRatio;
-        const scale         = targetEyeDist / eyeDist;
-        const targetMidX    = outW * 0.5;
-        const targetMidY    = outH * this.eyeYRatio;
+<body class="flex flex-col h-[100dvh] font-sans bg-bg text-ink overflow-hidden">
+    <header class="h-16 flex items-center justify-between px-6 md:px-8 shrink-0 z-10 bg-bg sticky top-0 border-b border-black/8">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-ink squircle-sm flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white">
+                    <circle cx="9" cy="9" r="2.5"/><circle cx="15" cy="9" r="2.5"/>
+                    <path d="M9 22H15C20 22 22 19 22 15V7C22 4 20 2 15 2H9C4 2 2 4 2 7V15C2 19 4 22 9 22Z" opacity="0.35" fill="white"/>
+                </svg>
+            </div>
+            <span class="font-bold text-xl tracking-tight">Match Cut</span>
+            <span class="hidden sm:inline text-xs font-mono text-black/30 bg-black/5 px-2 py-0.5 rounded-full">v2.1</span>
+        </div>
+        <div id="ai-status-badge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase bg-gray-200 text-gray-500 transition-all duration-500">
+            <div id="ai-status-dot" class="w-1.5 h-1.5 rounded-full bg-gray-400 transition-colors"></div>
+            <span id="ai-status-text">LOADING…</span>
+        </div>
+    </header>
 
-        const outCanvas = document.createElement('canvas');
-        outCanvas.width  = outW;
-        outCanvas.height = outH;
-        const ctx = outCanvas.getContext('2d');
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden p-4 md:p-6 gap-5 min-h-0">
+        <div class="w-full h-[42vh] md:h-full md:flex-1 flex items-center justify-center min-h-0">
+            <div id="canvas-container" data-ratio="1:1" class="relative squircle overflow-hidden bg-[#111] shadow-2xl border border-black/10 transition-all duration-500" style="max-height:100%; max-width:100%;">
+                <canvas id="preview-canvas" class="w-full h-full object-contain block"></canvas>
+                <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-4 px-5 py-2 rounded-full bg-black/30 backdrop-blur-xl border border-white/8 text-white/80 shadow-xl hover:bg-black/40 transition-all duration-200">
+                    <button id="btn-play-pause" class="hover:text-white transition-colors">
+                        <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/>
+                        </svg>
+                        <svg id="icon-play" class="hidden" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                    </button>
+                    <span id="frame-counter" class="font-mono text-[11px] font-medium opacity-70 tabular-nums">0 / 0</span>
+                </div>
+            </div>
+        </div>
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        <div class="w-full md:w-[380px] flex flex-col gap-5 overflow-y-auto pb-4 shrink-0 min-h-0">
+            <div id="drop-zone" class="group squircle h-28 bg-white border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 hover:border-blue-400 hover:bg-blue-50/40 hover:shadow-md">
+                <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+                <div class="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Drop photos here</div>
+                <div id="upload-count" class="hidden mt-2 text-[10px] font-bold text-blue-600 bg-blue-100 px-2.5 py-0.5 rounded-full">0 Loaded</div>
+            </div>
 
-        ctx.save();
-        ctx.translate(targetMidX, targetMidY);
-        ctx.rotate(-angle);
-        ctx.scale(scale, scale);
-        ctx.translate(-eyeMidX, -eyeMidY);
-        ctx.drawImage(sourceImage, 0, 0); // Draws the pure, uncropped original image
-        ctx.restore();
+            <div id="progress-wrap" class="hidden space-y-1.5 px-0.5">
+                <div class="flex justify-between items-center"><span id="progress-label" class="text-[11px] font-mono text-gray-500 truncate max-w-[260px]">Processing…</span></div>
+                <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-blue-500 rounded-full transition-all duration-200" style="width:0%"></div></div>
+            </div>
 
-        return outCanvas;
-    }
-}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Size</span>
+                    <select id="ratio-select" class="bg-white border border-gray-200 shadow-sm px-3 py-1.5 rounded-xl text-sm font-semibold text-gray-700 outline-none cursor-pointer hover:border-gray-300 transition-colors">
+                        <option value="1:1">1:1 Square</option><option value="9:16">9:16 Vertical</option><option value="16:9">16:9 Wide</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Guides</span>
+                    <input type="checkbox" id="toggle-guides" checked class="checkbox-circle">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block">Alignment Mode</span>
+                <div class="inline-flex bg-white border border-gray-200 shadow-sm p-1 rounded-xl w-full">
+                    <button id="mode-smart" class="flex-1 px-4 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-black shadow-inner transition-all">Smart (Rotate)</button>
+                    <button id="mode-default" class="flex-1 px-4 py-1.5 rounded-lg text-xs font-bold text-gray-400 transition-all hover:text-gray-600">Default (Upright)</button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Zoom</span>
+                    <span id="zoom-label" class="font-mono text-xs text-gray-500">1.00x</span>
+                </div>
+                <input type="range" id="slider-zoom" min="0.2" max="2.5" step="0.05" value="1.0">
+            </div>
+
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Speed</span>
+                    <span id="speed-label" class="font-mono text-xs text-gray-500">1.0x</span>
+                </div>
+                <input type="range" id="slider-speed" min="0.1" max="5.0" step="0.1" value="1.0">
+            </div>
+
+            <div class="space-y-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block">Format</span>
+                <div class="inline-flex bg-white border border-gray-200 shadow-sm p-1 rounded-xl">
+                    <button id="fmt-gif" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-black shadow-sm transition-all">GIF</button>
+                    <button id="fmt-mp4" class="px-4 py-1.5 rounded-lg text-xs font-bold text-gray-400 transition-all hover:text-gray-600">MP4</button>
+                </div>
+            </div>
+
+            <div class="flex-1"></div>
+            <button id="btn-clear" class="hidden w-full h-11 bg-white border border-gray-200 text-gray-500 squircle font-semibold text-sm hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all duration-200">Clear All Photos</button>
+            <button id="btn-export" disabled class="w-full h-16 export-bg text-white squircle font-bold text-base flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.015] active:scale-[0.985] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span id="export-text">Export Video</span>
+            </button>
+        </div>
+    </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                let repoName = window.location.pathname.split('/')[1];
+                let swPath = window.location.hostname.includes('github.io') && repoName ? `/${repoName}/sw.js` : 'sw.js';
+                navigator.serviceWorker.register(swPath).catch(err => console.error(err));
+            });
+        }
+    </script>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
