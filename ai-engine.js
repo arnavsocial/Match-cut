@@ -1,7 +1,7 @@
 import {
     FaceLandmarker,
     FilesetResolver
-} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js';
+} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/vision_bundle.mjs';
 
 const LEFT_IRIS  = [468, 469, 470, 471, 472];
 const RIGHT_IRIS = [473, 474, 475, 476, 477];
@@ -19,7 +19,7 @@ export class AIEngine {
         onStatus?.('Checking Cache & Loading AI...');
         try {
             const vision = await FilesetResolver.forVisionTasks(
-                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
             );
 
             this.landmarker = await FaceLandmarker.createFromOptions(vision, {
@@ -42,7 +42,9 @@ export class AIEngine {
             console.error('GPU init failed, falling back to CPU:', err);
             try {
                 onStatus?.('Loading CPU Fallback...');
-                 const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+                 const vision = await FilesetResolver.forVisionTasks(
+                     'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
+                 );
                  this.landmarker = await FaceLandmarker.createFromOptions(vision, {
                     baseOptions: {
                         modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
